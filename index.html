@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="header-title display-4 mb-3">
+                <i class="fas fa-wallet me-3"></i>Expense Tracker
+            </h1>
+            <p class="text-white-50 lead">Track your expenses and manage your budget effectively</p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-5">
+            <div class="col-md-4 mb-3">
+                <div class="stats-card income-card">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-arrow-up fa-2x me-3"></i>
+                        <div>
+                            <h3 class="mb-0" id="totalIncome">₹0.00</h3>
+                            <p class="mb-0 opacity-75">Total Income</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stats-card expense-card-stat">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-arrow-down fa-2x me-3"></i>
+                        <div>
+                            <h3 class="mb-0" id="totalExpenses">₹0.00</h3>
+                            <p class="mb-0 opacity-75">Total Expenses</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stats-card balance-card">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-balance-scale fa-2x me-3"></i>
+                        <div>
+                            <h3 class="mb-0" id="balance">₹0.00</h3>
+                            <p class="mb-0 opacity-75">Balance</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Transaction Form -->
+        <div class="row mb-5">
+            <div class="col-lg-8 mx-auto">
+                <div class="glass-card p-4">
+                    <h4 class="text-white mb-4"><i class="fas fa-plus-circle me-2"></i>Add Transaction</h4>
+                    <form id="transactionForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-white">Description</label>
+                                <input type="text" class="form-control" id="description" placeholder="Enter description"
+                                    required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-white">Amount</label>
+                                <input type="number" class="form-control" id="amount" placeholder="0.00" step="0.01"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-white">Type</label>
+                                <div class="btn-group w-100" role="group" id="typeButtons">
+                                    <input type="radio" class="btn-check" name="type" id="incomeType" value="income"
+                                        required>
+                                    <label class="btn btn-outline-light" for="incomeType">
+                                        <i class="fas fa-arrow-up me-2"></i>Income
+                                    </label>
+                                    <input type="radio" class="btn-check" name="type" id="expenseType" value="expense"
+                                        required>
+                                    <label class="btn btn-outline-light" for="expenseType">
+                                        <i class="fas fa-arrow-down me-2"></i>Expense
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-white">Category</label>
+                                <select class="form-select" id="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="food">Food</option>
+                                    <option value="transport">Transport</option>
+                                    <option value="entertainment">Entertainment</option>
+                                    <option value="utilities">Utilities</option>
+                                    <option value="shopping">Shopping</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label text-white">Remark</label>
+                                <textarea class="form-control" id="remark"
+                                    placeholder="Add any additional notes or remarks (optional)" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-gradient">
+                                <i class="fas fa-plus me-2"></i>Add Transaction
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions List -->
+        <div class="row">
+            <div class="col-12">
+                <div class="glass-card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="text-white mb-0"><i class="fas fa-list me-2"></i>Recent Transactions</h4>
+                        <button class="btn btn-outline-light" id="clearAll">
+                            <i class="fas fa-trash me-2"></i>Clear All
+                        </button>
+                    </div>
+                    <div id="transactionsList">
+                        <div class="empty-state">
+                            <i class="fas fa-receipt"></i>
+                            <h5>No transactions yet</h5>
+                            <p>Add your first transaction to get started!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+
+</body>
+
+</html>
