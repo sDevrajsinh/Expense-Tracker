@@ -1,188 +1,169 @@
-class ExpenseTracker {
-    constructor() {
-        this.transactions = JSON.parse(localStorage.getItem('transactions')) || [];
-        this.init();
+
+// Initialize transactions
+let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
+// DOM Elements
+const form = document.getElementById('transactionForm');
+const description = document.getElementById('description');
+const amount = document.getElementById('amount');
+const category = document.getElementById('category');
+const notes = document.getElementById('notes');
+const transactionsList = document.getElementById('transactionsList');
+const clearAllBtn = document.getElementById('clearAll');
+
+const totalIncomeEl = document.getElementById('totalIncome');
+const totalExpensesEl = document.getElementById('totalExpenses');
+const netBalanceEl = document.getElementById('netBalance');
+
+const todaySpendingEl = document.getElementById('todaySpending');
+const weeklyAvgEl = document.getElementById('weeklyAvg');
+const topSpendingEl = document.getElementById('topSpending');
+const savingsRateEl = document.getElementById('savingsRate');
+
+let selectedType = 'expense';
+
+// Select transaction type
+document.querySelectorAll('.type-card').forEach(card => {
+    card.addEventListener('click', () => {
+        document.querySelectorAll('.type-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        selectedType = card.getAttribute('data-type');
+    });
+});
+
+// Form submit
+form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const tx = {
+        id: Date.now(),
+        description: description.value.trim(),
+        amount: parseFloat(amount.value),
+        type: selectedType,
+        category: category.value,
+        notes: notes.value.trim(),
+        date: new Date().toISOString()
+    };
+    transactions.push(tx);
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+    form.reset();
+    renderTransactions();
+    updateStats();
+});
+
+// Render transactions
+function renderTransactions() {
+    transactionsList.innerHTML = '';
+    if (transactions.length === 0) {
+        transactionsList.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fas fa-robot"></i></div>
+          <h4>Ready to Track Your Finances</h4>
+          <p>Add your first transaction and let AI insights guide your financial journey!</p>
+        </div>`;
+        return;
     }
 
-    init() {
-        this.bindEvents();
-        this.renderTransactions();
-        this.updateStats();
-    }
-
-    bindEvents() {
-        document.getElementById('transactionForm').addEventListener('submit', (e) => this.addTransaction(e));
-        document.getElementById('clearAll').addEventListener('click', () => this.clearAll());
-
-        // Handle type selection change
-        document.querySelectorAll('input[name="type"]').forEach(radio => {
-            radio.addEventListener('change', (e) => this.updateCategoryOptions(e));
-        });
-    }
-
-    updateCategoryOptions(e) {
-        const category = document.getElementById('category');
-        if (e.target.value === 'income') {
-            category.innerHTML = '<option value="income">Income</option>';
-            category.value = 'income';
-        } else {
-            category.innerHTML = `
-                        <option value="">Select Category</option>
-                        <option value="food">Food</option>
-                        <option value="transport">Transport</option>
-                        <option value="entertainment">Entertainment</option>
-                        <option value="utilities">Utilities</option>
-                        <option value="shopping">Shopping</option>
-                        <option value="healthcare">Healthcare</option>
-                        <option value="other">Other</option>
-                    `;
-        }
-    }
-
-    addTransaction(e) {
-        e.preventDefault();
-
-        const description = document.getElementById('description').value;
-        const amount = parseFloat(document.getElementById('amount').value);
-        const category = document.getElementById('category').value;
-        const type = document.querySelector('input[name="type"]:checked')?.value;
-        const remark = document.getElementById('remark').value;
-
-        if (!description || !amount || !category || !type) {
-            alert('Please fill in all required fields');
-            return;
-        }
-
-        const transaction = {
-            id: Date.now(),
-            description,
-            amount: type === 'expense' ? -Math.abs(amount) : Math.abs(amount),
-            category,
-            type,
-            remark,
-            date: new Date().toLocaleDateString()
-        };
-
-        this.transactions.unshift(transaction);
-        this.saveToStorage();
-        this.renderTransactions();
-        this.updateStats();
-        this.resetForm();
-    }
-
-    renderTransactions() {
-        const container = document.getElementById('transactionsList');
-
-        if (this.transactions.length === 0) {
-            container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-receipt"></i>
-                            <h5>No transactions yet</h5>
-                            <p>Add your first transaction to get started!</p>
-                        </div>
-                    `;
-            return;
-        }
-
-        container.innerHTML = this.transactions.map(transaction => `
-                    <div class="expense-card p-3 mb-3 animate-fade-in" data-id="${transaction.id}">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center">
-                                <div class="category-icon ${transaction.category}">
-                                    <i class="fas fa-${this.getCategoryIcon(transaction.category)}"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1">${transaction.description}</h6>
-                                    <small class="text-muted">
-                                        <i class="fas fa-calendar me-1"></i>${transaction.date}
-                                        <span class="badge bg-light text-dark ms-2">${transaction.category}</span>
-                                    </small>
-                                    ${transaction.remark ? `<div class="remark-text mt-1"><i class="fas fa-comment me-1"></i>${transaction.remark}</div>` : ''}
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <span class="expense-amount ${transaction.amount >= 0 ? 'positive' : 'negative'} me-3">
-                                    ${transaction.amount >= 0 ? '+' : ''}₹${Math.abs(transaction.amount).toFixed(2)}
-                                </span>
-                                <button class="delete-btn" onclick="expenseTracker.deleteTransaction(${transaction.id})">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-    }
-
-    getCategoryIcon(category) {
-        const icons = {
-            income: 'dollar-sign',
-            food: 'utensils',
-            transport: 'car',
-            entertainment: 'film',
-            utilities: 'lightbulb',
-            shopping: 'shopping-bag',
-            healthcare: 'heartbeat',
-            other: 'ellipsis-h'
-        };
-        return icons[category] || 'circle';
-    }
-
-    deleteTransaction(id) {
-        if (confirm('Are you sure you want to delete this transaction?')) {
-            this.transactions = this.transactions.filter(t => t.id !== id);
-            this.saveToStorage();
-            this.renderTransactions();
-            this.updateStats();
-        }
-    }
-
-    clearAll() {
-        if (confirm('Are you sure you want to delete all transactions?')) {
-            this.transactions = [];
-            this.saveToStorage();
-            this.renderTransactions();
-            this.updateStats();
-        }
-    }
-
-    updateStats() {
-        const totalIncome = this.transactions
-            .filter(t => t.amount > 0)
-            .reduce((sum, t) => sum + t.amount, 0);
-
-        const totalExpenses = Math.abs(this.transactions
-            .filter(t => t.amount < 0)
-            .reduce((sum, t) => sum + t.amount, 0));
-
-        const balance = totalIncome - totalExpenses;
-
-        document.getElementById('totalIncome').textContent = `₹${totalIncome.toFixed(2)}`;
-        document.getElementById('totalExpenses').textContent = `₹${totalExpenses.toFixed(2)}`;
-        document.getElementById('balance').textContent = `₹${balance.toFixed(2)}`;
-    }
-
-    resetForm() {
-        document.getElementById('transactionForm').reset();
-        document.getElementById('category').innerHTML = `
-                    <option value="">Select Category</option>
-                    <option value="food">Food</option>
-                    <option value="transport">Transport</option>
-                    <option value="entertainment">Entertainment</option>
-                    <option value="utilities">Utilities</option>
-                    <option value="shopping">Shopping</option>
-                    <option value="healthcare">Healthcare</option>
-                    <option value="other">Other</option>
-                `;
-        // Clear radio button selections
-        document.querySelectorAll('input[name="type"]').forEach(radio => {
-            radio.checked = false;
-        });
-    }
-
-    saveToStorage() {
-        localStorage.setItem('transactions', JSON.stringify(this.transactions));
-    }
+    transactions.slice().reverse().forEach(tx => {
+        const div = document.createElement('div');
+        div.className = 'transaction-item';
+        div.innerHTML = `
+        <div><strong>${tx.description}</strong><br><small>${tx.category} - ${new Date(tx.date).toLocaleDateString()}</small></div>
+        <div style="color:${tx.type === 'income' ? 'green' : 'red'};">₹${tx.amount.toFixed(2)}</div>`;
+        transactionsList.appendChild(div);
+    });
 }
 
-// Initialize the expense tracker
-const expenseTracker = new ExpenseTracker();
+// Update income, expense, balance
+function updateStats() {
+    const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const net = income - expense;
+
+    totalIncomeEl.textContent = `₹${income.toFixed(2)}`;
+    totalExpensesEl.textContent = `₹${expense.toFixed(2)}`;
+    netBalanceEl.textContent = `₹${net.toFixed(2)}`;
+
+    updateInsights();
+}
+
+// Update insights panel
+function updateInsights() {
+    const today = new Date().toISOString().split('T')[0];
+    const todayExpenses = transactions.filter(t => t.type === 'expense' && t.date.startsWith(today));
+    const thisWeekExpenses = transactions.filter(t => {
+        const diff = (new Date() - new Date(t.date)) / (1000 * 60 * 60 * 24);
+        return diff <= 7 && t.type === 'expense';
+    });
+
+    const todaySpent = todayExpenses.reduce((sum, t) => sum + t.amount, 0);
+    const weeklyAvg = thisWeekExpenses.length ? thisWeekExpenses.reduce((sum, t) => sum + t.amount, 0) / 7 : 0;
+
+    todaySpendingEl.textContent = `₹${todaySpent.toFixed(2)}`;
+    weeklyAvgEl.textContent = `₹${weeklyAvg.toFixed(2)}`;
+
+    // Top category
+    const categoryTotals = {};
+    transactions.forEach(t => {
+        if (t.type === 'expense') {
+            categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+        }
+    });
+    const sorted = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
+    topSpendingEl.textContent = sorted.length ? sorted[0][0] : '-';
+
+    // Savings rate
+    const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const savingsRate = income > 0 ? ((income - expense) / income) * 100 : 0;
+    savingsRateEl.textContent = `${savingsRate.toFixed(1)}%`;
+}
+
+// Clear all
+clearAllBtn.addEventListener('click', () => {
+    if (confirm('Are you sure you want to delete all transactions?')) {
+        transactions = [];
+        localStorage.removeItem('transactions');
+        renderTransactions();
+        updateStats();
+    }
+});
+
+// Initialize
+renderTransactions();
+updateStats();
+function renderTransactions() {
+    transactionsList.innerHTML = '';
+    if (transactions.length === 0) {
+        transactionsList.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-robot"></i></div>
+        <h4>Ready to Track Your Finances</h4>
+        <p>Add your first transaction and let AI insights guide your financial journey!</p>
+      </div>`;
+        return;
+    }
+
+    transactions.slice().reverse().forEach(tx => {
+        const div = document.createElement('div');
+        div.className = 'transaction-item';
+        div.innerHTML = `
+      <div>
+        <strong>${tx.description}</strong><br>
+        <small>${tx.category} - ${new Date(tx.date).toLocaleDateString()}</small>
+      </div>
+      <div class="transaction-actions">
+        <span style="color:${tx.type === 'income' ? 'green' : 'red'};">₹${tx.amount.toFixed(2)}</span>
+        <button class="btn btn-sm btn-danger" onclick="deleteTransaction(${tx.id})">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    `;
+        transactionsList.appendChild(div);
+    });
+}
+function deleteTransaction(id) {
+    transactions = transactions.filter(tx => tx.id !== id);
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+    renderTransactions();
+    updateStats();
+}
